@@ -1,0 +1,3 @@
+[submodule "STM32CubeF1"]
+	path = STM32CubeF1
+	url = https://github.com/rafael-at97/STM32CubeF1
