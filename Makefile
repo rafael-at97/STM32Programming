@@ -1,61 +1,138 @@
-# Binaries will be generated with this name (.elf, .bin, .hex)
+################################################################
+# Project Name
+# Binaries will be generated with this name (.elf, .bin, .hex) #
+################################################################
 PROJ_NAME=template
 
-# Directories
+################
+# DEBUG on/off #
+################
+DEBUG = 0
+
+###############
+# Directories #
+###############
 SRC_DIR=./Src
+INC_DIR=./Inc
+OBJ_DIR=./Obj
 BIN_DIR=./Bin
-LIB_DIR=./Inc
 
-## STM HAL SubProject folder
-STM_HAL=STM32CubeF1
+################
+# Source files #
+################
 
-# Source files (*.c)
-SRCS=$(SRC_DIR)/main.c $(SRC_DIR)/system_stm32f1xx.c
+## Project specific Source files
+C_SRCS  = main.c
+C_SRCS += system_stm32f1xx.c 
+C_SRCS += stm32f1xx_it.c 
+C_SRCS += stm32f1xx_hal_msp.c
 
 ## Libraries source files, placed in $(STM_HAL)/Drivers/STM32F1xx_HAL_Driver/src
-SRCS += stm32f1xx_hal.c
-SRCS += stm32f1xx_hal_cortex.c
-SRCS += stm32f1xx_hal_rcc.c
-SRCS += stm32f1xx_hal_gpio.c
+C_SRCS += stm32f1xx_hal.c
+C_SRCS += stm32f1xx_hal_cortex.c
+C_SRCS += stm32f1xx_hal_pwr.c
+C_SRCS += stm32f1xx_hal_rcc.c
+C_SRCS += stm32f1xx_hal_rcc_ex.c
+C_SRCS += stm32f1xx_hal_flash.c
+C_SRCS += stm32f1xx_hal_flash_ex.c
+C_SRCS += stm32f1xx_hal_gpio.c
+C_SRCS += stm32f1xx_hal_gpio_ex.c
+C_SRCS += stm32f1xx_hal_tim.c
+C_SRCS += stm32f1xx_hal_tim_ex.c
+C_SRCS += stm32f1xx_hal_dma.c
+C_SRCS += stm32f1xx_hal_exti.c
 
-# Compiler settings. Only edit CFLAGS to include other header files.
-CC=arm-none-eabi-gcc
-OBJCOPY=arm-none-eabi-objcopy
+# Startup file
+AS_SRCS = startup_stm32f103x8.s
 
-# Compiler flags
-CFLAGS  = -g -O2 -Wall --specs=nosys.specs -TSTM32F103x8_FLASH.ld
-CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m3 -mthumb-interwork
-CFLAGS += -I. -I$(LIB_DIR)
+# Linker script file
+LDSCRIPT = STM32F103x8_FLASH.ld
 
-## Select the correct chip, look in the header stm32f1xx.h for a list of values
-CFLAGS += -DSTM32F103xB ## Use the xB, but we are actually compiling for the x8
+############
+# Binaries #
+############
+PREFIX=arm-none-eabi-
 
-# Include files from STM libraries
-## HAL Drivers
-CFLAGS += -I$(STM_HAL)/Drivers/STM32F1xx_HAL_Driver/Inc
+CC=$(PREFIX)gcc
+AS=$(PREFIX)gcc -x assembler-with-cpp
+OBJCOPY=$(PREFIX)objcopy
+
+#####################
+# CPU configuration #
+#####################
+CPU=-mcpu=cortex-m3
+CPU_FLAGS=$(CPU) -mthumb
+
+CPU_DEFS=-DUSE_HAL_DRIVER -DSTM32F103xB
+
+#################
+# Includes path #
+#################
+
+## Project specific includes
+INCLUDES = -I. -I$(INC_DIR)
+
+## STM32Cube includes
+STM_HAL=STM32CubeF1
+### HAL Drivers
+INCLUDES += -I$(STM_HAL)/Drivers/STM32F1xx_HAL_Driver/Inc
 
 ## CMSIS (Common Microcontroller Software Interface Standard)
-CFLAGS += -I$(STM_HAL)/Drivers/CMSIS/Core/Include
-CFLAGS += -I$(STM_HAL)/Drivers/CMSIS/Device/ST/STM32F1xx/Include
+INCLUDES += -I$(STM_HAL)/Drivers/CMSIS/Core/Include
+INCLUDES += -I$(STM_HAL)/Drivers/CMSIS/Device/ST/STM32F1xx/Include
 
-# Add startup file to build
-SRCS += startup_stm32f103x8.s
+##################
+# Binaries flags #
+##################
+ifeq ($(DEBUG), 1)
+DBG_FLAGS = -g -gdwarf-2
+OPT = -Og
+else
+OPT = -Os
+endif
 
-vpath %.c $(STM_HAL)/Drivers/STM32F1xx_HAL_Driver/Src \
+ASFLAGS = $(CPU_FLAGS) -Wall -std=gnu11 $(OPT) $(DBG_FLAGS) -fdata-sections -ffunction-sections
+CFLAGS  = $(CPU_FLAGS) -Wall -std=gnu11 $(OPT) $(DBG_FLAGS) -fdata-sections -ffunction-sections $(CPU_DEFS) $(INCLUDES)
 
-.PHONY: proj
+LDLIBS = -lc -lm -lnosys
+LDFLAGS = $(CPU_FLAGS) -specs=nano.specs -T$(LDSCRIPT) $(LDLIBS) -Wl,--gc-sections
 
-all: proj
+###############
+# Build steps #
+###############
+OBJS  = $(addprefix $(OBJ_DIR)/,$(notdir $(C_SRCS:.c=.o)))
+OBJS += $(addprefix $(OBJ_DIR)/,$(notdir $(AS_SRCS:.s=.o)))
 
-proj: $(PROJ_NAME).elf
+vpath %.c $(SRC_DIR)
+vpath %.c $(STM_HAL)/Drivers/STM32F1xx_HAL_Driver/Src
 
-$(PROJ_NAME).elf: $(SRCS) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $(BIN_DIR)/$@
-	$(OBJCOPY) -O ihex $(BIN_DIR)/$(PROJ_NAME).elf $(BIN_DIR)/$(PROJ_NAME).hex
-	$(OBJCOPY) -O binary $(BIN_DIR)/$(PROJ_NAME).elf $(BIN_DIR)/$(PROJ_NAME).bin
+.PHONY: all clean
+
+all: $(PROJ_NAME).elf $(PROJ_NAME).hex $(PROJ_NAME).bin
+
+$(PROJ_NAME).elf: $(OBJS) | $(BIN_DIR)
+	$(CC) $(OBJS) $(LDFLAGS) -o $(BIN_DIR)/$@
+
+$(PROJ_NAME).hex: $(BIN_DIR)/$(PROJ_NAME).elf
+	$(OBJCOPY) -O ihex $< $(BIN_DIR)/$@
+
+$(PROJ_NAME).bin: $(BIN_DIR)/$(PROJ_NAME).elf
+	$(OBJCOPY) -O binary $< $(BIN_DIR)/$@
+
+$(OBJ_DIR)/%.o: %.c | $(OBJ_DIR) 
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o: %.s | $(OBJ_DIR)
+	$(AS) -c $(ASFLAGS) $< -o $@
 
 $(BIN_DIR):
 	mkdir -p $@
 
+$(OBJ_DIR):
+	mkdir -p $@
+
+############
+# Clean-Up #
+############
 clean:
-	rm -f *.o $(BIN_DIR)/$(PROJ_NAME).elf $(BIN_DIR)/$(PROJ_NAME).hex $(BIN_DIR)/$(PROJ_NAME).bin
+	rm -fR $(BIN_DIR) $(OBJ_DIR)

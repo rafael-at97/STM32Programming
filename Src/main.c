@@ -44,9 +44,7 @@ int main(void)
   /* Configure the system clock to 72 MHz */
   SystemClock_Config();
 
-
   /* Add your application code here */
-
 
   /* Infinite loop */
   while (1)
@@ -82,12 +80,12 @@ void SystemClock_Config(void)
   /* PLL configuration: PLLCLK = PREDIV1CLK * PLLMUL = 8 * 9 = 72 MHz */ 
 
   /* Enable HSE Oscillator and activate PLL with HSE as source */
-  oscinitstruct.OscillatorType        = RCC_OSCILLATORTYPE_HSE;
-  oscinitstruct.HSEState              = RCC_HSE_ON;
-  oscinitstruct.HSEPredivValue        = RCC_HSE_PREDIV_DIV1;
-  oscinitstruct.PLL.PLLState          = RCC_PLL_ON;
-  oscinitstruct.PLL.PLLSource         = RCC_PLLSOURCE_HSE;
-  oscinitstruct.PLL.PLLMUL            = RCC_PLL_MUL9;
+  oscinitstruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  oscinitstruct.HSEState       = RCC_HSE_ON;
+  oscinitstruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  oscinitstruct.PLL.PLLState   = RCC_PLL_ON;
+  oscinitstruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
+  oscinitstruct.PLL.PLLMUL     = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&oscinitstruct)!= HAL_OK)
   {
     /* Initialization Error */
@@ -101,7 +99,7 @@ void SystemClock_Config(void)
   clkinitstruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   clkinitstruct.APB2CLKDivider = RCC_HCLK_DIV1;
   clkinitstruct.APB1CLKDivider = RCC_HCLK_DIV2;  
-  if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_0)!= HAL_OK)
+  if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_2)!= HAL_OK)
   {
     /* Initialization Error */
     while(1); 

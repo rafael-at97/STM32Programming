@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32f103x6.s
+  * @file      startup_stm32f103x8.s
   * @author    Rafael Torres
-  * @brief     STM32F103x6 Devices vector table for common toolchain.
+  * @brief     STM32F103x8 Devices vector table for common toolchain.
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -62,31 +62,34 @@ defined in linker script */
 Reset_Handler:
 
 /* Copy the data segment initializers from flash to SRAM */
-  movs r1, #0
+  ldr r0, =_sdata
+  ldr r1, =_edata
+  ldr r2, =_sidata
+  movs r3, #0
   b LoopCopyDataInit
 
 CopyDataInit:
-  ldr r3, =_sidata
-  ldr r3, [r3, r1]
-  str r3, [r0, r1]
-  adds r1, r1, #4
+  ldr r4, [r2, r3]
+  str r4, [r0, r3]
+  adds r3, r3, #4
 
 LoopCopyDataInit:
-  ldr r0, =_sdata
-  ldr r3, =_edata
-  adds r2, r0, r1
-  cmp r2, r3
+  adds r4, r0, r3
+  cmp r4, r1
   bcc CopyDataInit
-  ldr r2, =_sbss
-  b LoopFillZerobss
+  
 /* Zero fill the bss segment. */
-FillZerobss:
+  ldr r2, =_sbss
+  ldr r4, =_ebss
   movs r3, #0
-  str r3, [r2], #4
+  b LoopFillZerobss
+
+FillZerobss:
+  str  r3, [r2]
+  adds r2, r2, #4
 
 LoopFillZerobss:
-  ldr r3, = _ebss
-  cmp r2, r3
+  cmp r2, r4
   bcc FillZerobss
 
 /* Call the clock system intitialization function.*/
