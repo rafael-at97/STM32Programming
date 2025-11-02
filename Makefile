@@ -12,10 +12,30 @@ DEBUG = 0
 ###############
 # Directories #
 ###############
-SRC_DIR=./Src
-INC_DIR=./Inc
-OBJ_DIR=./Obj
-BIN_DIR=./Bin
+TOOLCHAIN_DIR=/opt/arm/toolchain/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi
+
+SRC_DIR=./src
+INC_DIR=./inc
+OUT_DIR=./out
+OBJ_DIR=$(OUT_DIR)/obj
+BIN_DIR=$(OUT_DIR)/bin
+
+##################
+# Binaries Setup #
+##################
+PREFIX=arm-none-eabi-
+
+CC=$(TOOLCHAIN_DIR)/bin/$(PREFIX)gcc
+AS=$(TOOLCHAIN_DIR)/bin/$(PREFIX)gcc -x assembler-with-cpp
+OBJCOPY=$(TOOLCHAIN_DIR)/bin/$(PREFIX)objcopy
+
+#####################
+# CPU configuration #
+#####################
+CPU=-mcpu=cortex-m3
+CPU_FLAGS=$(CPU) -mthumb
+
+CPU_DEFS=-DUSE_HAL_DRIVER -DSTM32F103xB
 
 ################
 # Source files #
@@ -47,23 +67,6 @@ AS_SRCS = startup_stm32f103x8.s
 
 # Linker script file
 LDSCRIPT = STM32F103x8_FLASH.ld
-
-############
-# Binaries #
-############
-PREFIX=arm-none-eabi-
-
-CC=$(PREFIX)gcc
-AS=$(PREFIX)gcc -x assembler-with-cpp
-OBJCOPY=$(PREFIX)objcopy
-
-#####################
-# CPU configuration #
-#####################
-CPU=-mcpu=cortex-m3
-CPU_FLAGS=$(CPU) -mthumb
-
-CPU_DEFS=-DUSE_HAL_DRIVER -DSTM32F103xB
 
 #################
 # Includes path #
